@@ -52,13 +52,6 @@ public class HttpResponseHandler extends SimpleChannelInboundHandler<HttpObject>
 
             response = (HttpResponse) msg;
 
-            resultCallback.onStart(new Closeable() {
-                @Override
-                public void close() {
-                    ctx.channel().close();
-                }
-            });
-
         } else if (msg instanceof HttpContent) {
 
             HttpContent content = (HttpContent) msg;
@@ -124,5 +117,22 @@ public class HttpResponseHandler extends SimpleChannelInboundHandler<HttpObject>
         body.discardReadBytes();
         body.release();
         return result;
+    }
+
+    @Override
+    public void channelRegistered(final ChannelHandlerContext ctx) throws Exception {
+        resultCallback.onStart(new Closeable() {
+            @Override
+            public void close() {
+                ctx.channel().close();
+            }
+        });
+        super.channelRegistered(ctx);
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        resultCallback.onError(cause);
+        super.exceptionCaught(ctx, cause);
     }
 }
